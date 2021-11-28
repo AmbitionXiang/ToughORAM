@@ -148,12 +148,14 @@ uint32_t PathORAM::access(uint32_t id, int32_t position_in_id, char opType, uint
 
             //sampling leafs for a level ahead
             sgx_read_rand((unsigned char *)random_value, ID_SIZE_IN_BYTES);
+            //newleaf_nextlevel: prepare the next-level block's new leaf to be assigned, because it is also the content of the current-level block
             newleaf_nextlevel = N_level[level + 1] + (*((uint32_t *)random_value) % N_level[level + 1]);
 
 #ifdef ACCESS_DEBUG
             printf("access : Level = %d: \n leaf = %d, block_id = %d, position_in_id = %d, newleaf_nextlevel = %d\n", level, leaf, id, position_in_id, newleaf_nextlevel);
 #endif
 
+            // prev_sampled_leaf: the current-level block's new leaf to be assigned, which is sampled in the previous level.
             nextLeaf = access_oram_level(opType, leaf, id, position_in_id, level, *prev_sampled_leaf, newleaf_nextlevel, data_in, data_out);
             *prev_sampled_leaf = newleaf_nextlevel;
 

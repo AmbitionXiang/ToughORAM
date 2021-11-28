@@ -15,25 +15,26 @@
 *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "../Globals.hpp"
-#include "../CONFIG.h"
-#include "../CONFIG_FLAGS.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string.h>
-#include <cstdint>
-#include <random>
-#include "utils.hpp"
-#include "ZT.hpp"
+#include <openssl/conf.h>
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
 #include <openssl/ecdsa.h>
-#include <openssl/conf.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/obj_mac.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include <cstdint>
+#include <iostream>
+#include <random>
+
+#include "../CONFIG.h"
+#include "../CONFIG_FLAGS.h"
+#include "../Globals.hpp"
+#include "ZT.hpp"
+#include "utils.hpp"
 
 EC_KEY *ENCLAVE_PUBLIC_KEY = NULL;
 unsigned char *enclave_public_key;
@@ -54,13 +55,13 @@ unsigned char *encrypted_request, *tag_in, *encrypted_response, *tag_out;
 uint32_t request_size, response_size;
 unsigned char *data_in;
 unsigned char *data_out;
-uint32_t bulk_batch_size=0;
+uint32_t bulk_batch_size = 0;
 std::string log_file;
 
 uint8_t Z;
-FILE *iquery_file; 
+FILE *iquery_file;
 
-uint32_t oram_index =0;
+uint32_t oram_index = 0;
 
 int32_t min_expected_no_of_parameters = 8;
 uint32_t NUM_BLOCKS;
@@ -72,11 +73,9 @@ uint8_t store_mode;
 uint8_t oblivious_mode;
 std::string logfile;
 
-
 clock_t generate_request_start, generate_request_stop, extract_response_start,
-        extract_response_stop, process_request_start, process_request_stop, 
-        generate_request_time, extract_response_time, process_request_time;
+    extract_response_stop, process_request_start, process_request_stop,
+    generate_request_time, extract_response_time, process_request_time;
 
 clock_t inserts_start, inserts_stop, inserts_time, insert_time;
 clock_t fetches_start, fetches_stop, fetches_time, fetch_time;
-

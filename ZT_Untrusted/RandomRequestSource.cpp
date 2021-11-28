@@ -22,22 +22,20 @@
  *      Author: root
  */
 
-#include <random>
 #include "RandomRequestSource.hpp"
 
+#include <random>
+
 int* RandomRequestSource::GenerateRandomSequence(int length, int max_capacity) {
-	int* requestsource = (int *) malloc( length * sizeof(int) );
-	std::default_random_engine generator;
-	std::uniform_int_distribution<int> distribution(0,max_capacity-1);
-	int i,val;
+    int* requestsource = (int*)malloc(length * sizeof(int));
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0, max_capacity - 1);
+    int i, val;
 
-	for(i=0;i<length;i++)
-	{
-		val = distribution(generator);
-		requestsource[i] = val;
-	}
+    for (i = 0; i < length; i++) {
+        val = distribution(generator);
+        requestsource[i] = val;
+    }
 
-	return requestsource;
+    return requestsource;
 }
-
-

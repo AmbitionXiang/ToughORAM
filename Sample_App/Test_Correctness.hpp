@@ -15,24 +15,26 @@
 *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "../Globals.hpp"
-#include "../CONFIG.h"
-#include "../CONFIG_FLAGS.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string.h>
-#include <cstdint>
-#include <random>
-#include "ZT.hpp"
-#include "utils.hpp"
+#include <openssl/conf.h>
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
 #include <openssl/ecdsa.h>
-#include <openssl/conf.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/obj_mac.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <cstdint>
+#include <iostream>
+#include <random>
+
+#include "../CONFIG.h"
+#include "../CONFIG_FLAGS.h"
+#include "../Globals.hpp"
+#include "ZT.hpp"
+#include "utils.hpp"
 
 EC_KEY *ENCLAVE_PUBLIC_KEY = NULL;
 unsigned char *enclave_public_key;
@@ -49,13 +51,13 @@ uint32_t RECURSION_DATA_SIZE = 0;
 uint32_t ORAM_TYPE = 0;
 uint8_t Z;
 
-typedef struct experiment_parameters{
-  uint32_t data_size;
-  uint32_t max_blocks;
-  uint32_t request_length;
-  uint32_t stash_size;
-  uint32_t oblivious_flag;
-  uint32_t recursion_data_size;
-  uint8_t oram_type;
-  uint8_t Z;
-}exp_params;
+typedef struct experiment_parameters {
+    uint32_t data_size;
+    uint32_t max_blocks;
+    uint32_t request_length;
+    uint32_t stash_size;
+    uint32_t oblivious_flag;
+    uint32_t recursion_data_size;
+    uint8_t oram_type;
+    uint8_t Z;
+} exp_params;

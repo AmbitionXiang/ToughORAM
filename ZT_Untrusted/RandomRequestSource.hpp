@@ -25,12 +25,11 @@
 #ifndef APP_RANDOMREQUESTSOURCE_HPP_
 #define APP_RANDOMREQUESTSOURCE_HPP_
 
-class RandomRequestSource
-{
-public:
-	RandomRequestSource(){};
-	RandomRequestSource(int length) {};
-	int* GenerateRandomSequence(int length, int max_capacity);
+class RandomRequestSource {
+   public:
+    RandomRequestSource(){};
+    RandomRequestSource(int length){};
+    int* GenerateRandomSequence(int length, int max_capacity);
 };
 
 #endif
