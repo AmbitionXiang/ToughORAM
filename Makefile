@@ -274,8 +274,7 @@ $(App_Name): ZT_Untrusted/Enclave_u.o $(App_Cpp_Objects)
 	#To build a dynamic-linked library ZeroTrace:
 	@$(CXX) $^ -shared -o libZT.so $(App_Link_Flags)
 	@echo "LINK =>  $@"
-	cp libZT.so Sample_App/ 
-	cp libZT.so ../
+	mv libZT.so Sample_App/
 	$(MAKE) -C Sample_App/
 
 ######## Enclave Objects ########
@@ -301,13 +300,11 @@ $(Enclave_Name): ZT_Enclave/Enclave_t.o $(Enclave_Cpp_Objects) $(Enclave_Asm_Obj
 
 $(Signed_Enclave_Name): $(Enclave_Name)
 	@$(SGX_ENCLAVE_SIGNER) sign -key ZT_Enclave/Enclave_private.pem -enclave $(Enclave_Name) -out $@ -config $(Enclave_Config_File)
-	cp $(Signed_Enclave_Name) Sample_App/
-	cp $(Signed_Enclave_Name) ../
-	cp $(Enclave_Name) ../
 	@echo "SIGN =>  $@"
 
 .PHONY: clean
 
 clean:
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) ZT_Untrusted/Enclave_u.* $(Enclave_Cpp_Objects) ZT_Enclave/Enclave_t.*
+	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) Sample_App/libZT.so ZT_Untrusted/Enclave_u.* $(Enclave_Cpp_Objects) ZT_Enclave/Enclave_t.* ZT_Enclave/*.o \
+		Sample_App/hsoramclient Sample_App/lsclient Sample_App/sampleapp Sample_App/testcorrectness ZT_1000_128
 
