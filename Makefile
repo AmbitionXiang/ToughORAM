@@ -31,8 +31,8 @@
 
 NASM ?= nasm
 NASM_Flags ?= -f elf64
-UNTRUSTED_DIR = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services/untrusted
-COMMON_ELEOS = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services/common
+# UNTRUSTED_DIR = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services/untrusted
+# COMMON_ELEOS = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services/common
 
 ######## SGX SDK Settings ########
 
@@ -41,6 +41,8 @@ SGX_MODE ?= HW
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
 
+include $(SGX_SDK)/buildenv.mk
+
 ifeq ($(shell getconf LONG_BIT), 32)
 	SGX_ARCH := x86
 else ifeq ($(findstring -m32, $(CXXFLAGS)), -m32)
@@ -48,12 +50,12 @@ else ifeq ($(findstring -m32, $(CXXFLAGS)), -m32)
 endif
 
 ifeq ($(SGX_ARCH), x86)
-	SGX_COMMON_CFLAGS := -m32
+	SGX_COMMON_FLAGS := -m32
 	SGX_LIBRARY_PATH := $(SGX_SDK)/lib
 	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x86/sgx_sign
 	SGX_EDGER8R := $(SGX_SDK)/bin/x86/sgx_edger8r
 else
-	SGX_COMMON_CFLAGS := -m64
+	SGX_COMMON_FLAGS := -m64
 	SGX_LIBRARY_PATH := $(SGX_SDK)/lib64
 	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x64/sgx_sign
 	SGX_EDGER8R := $(SGX_SDK)/bin/x64/sgx_edger8r
@@ -66,21 +68,21 @@ endif
 endif
 
 ifeq ($(SGX_DEBUG), 1)
-        SGX_COMMON_CFLAGS += -O0 -g
+        SGX_COMMON_FLAGS += -O0 -g
+		SGXSSL_Library_Name := sgx_tsgxssld
+        OpenSSL_Crypto_Library_Name := sgx_tsgxssl_cryptod
 else
-        SGX_COMMON_CFLAGS += -O2
+        SGX_COMMON_FLAGS += -O2 -D_FORTIFY_SOURCE=2
+		SGXSSL_Library_Name := sgx_tsgxssl
+        OpenSSL_Crypto_Library_Name := sgx_tsgxssl_crypto
 endif
 
-ifeq ($(SGX_DEBUG), 1)
-        SGX_COMMON_CFLAGS += -O0 -g
-                SGXSSL_Library_Name := sgx_tsgxssld
-                OpenSSL_Crypto_Library_Name := sgx_tsgxssl_cryptod
-else
-        SGX_COMMON_CFLAGS += -O2 -D_FORTIFY_SOURCE=2
-                SGXSSL_Library_Name := sgx_tsgxssl
-                OpenSSL_Crypto_Library_Name := sgx_tsgxssl_crypto
-endif
-
+SGX_COMMON_FLAGS += -Wall -Wextra -Winit-self -Wpointer-arith -Wreturn-type \
+                    -Waddress -Wsequence-point -Wformat-security \
+                    -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
+                    -Wcast-align -Wcast-qual -Wconversion -Wredundant-decls
+SGX_COMMON_CFLAGS := $(SGX_COMMON_FLAGS) -Wjump-misses-init -Wstrict-prototypes -Wunsuffixed-float-constants
+SGX_COMMON_CXXFLAGS := $(SGX_COMMON_FLAGS) -Wnon-virtual-dtor -std=c++11
 
 ######## App Settings ########
 
@@ -91,12 +93,9 @@ else
 endif
 
 ZT_LIBRARY_PATH := ./Sample_App/
-App_Cpp_Files := ZT_Untrusted/App.cpp ZT_Untrusted/LocalStorage.cpp ZT_Untrusted/RandomRequestSource.cpp $(wildcard ZT_Untrusted/Edger8rSyntax/*.cpp) $(wildcard ZT_Untrusted/TrustedLibrary/*.cpp)
-Enclave_Asm_Files := ZT_Enclave/oblivious_functions.asm
-Enclave_Asm_Objects := $(Enclave_Asm_Files:.asm=.o)
+App_Cpp_Files := ZT_Untrusted/App.cpp ZT_Untrusted/LocalStorage.cpp ZT_Untrusted/RandomRequestSource.cpp
 App_Include_Paths := -IInclude -I$(UNTRUSTED_DIR) -IApp -I$(SGX_SDK)/include
-
-App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
+App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths)
 
 # Three configuration modes - Debug, prerelease, release
 #   Debug - Macro DEBUG enabled.
@@ -111,17 +110,10 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
-App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread
+App_Link_Flags := -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread
 
-
-Lib_services_Cpp_Files := $(wildcard common/*.cpp) $(wildcard untrusted/*.cpp)
-Lib_services_Cpp_Objects := $(Lib_services_Cpp_Files:.cpp=.o)
-
-ifneq ($(SGX_MODE), HW)
-	App_Link_Flags += -lsgx_uae_service_sim
-else
-	App_Link_Flags += -lsgx_uae_service
-endif
+# Lib_services_Cpp_Files := $(wildcard common/*.cpp) $(wildcard untrusted/*.cpp)
+# Lib_services_Cpp_Objects := $(Lib_services_Cpp_Files:.cpp=.o)
 
 App_Cpp_Objects := $(App_Cpp_Files:.cpp=.o)
 
@@ -137,16 +129,32 @@ else
 	Service_Library_Name := sgx_tservice
 endif
 Crypto_Library_Name := sgx_tcrypto
-services_lib = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services
-SGXSSL_INCLUDE_PATH := /home/ssasy/intel-sgx-ssl/Linux/package/include
 
-Enclave_Cpp_Files := ZT_Enclave/Globals_Enclave.cpp ZT_Enclave/ZT_Enclave.cpp ZT_Enclave/Enclave_utils.cpp ZT_Enclave/Block.cpp ZT_Enclave/Bucket.cpp ZT_Enclave/Stash.cpp ZT_Enclave/ORAMTree.cpp ZT_Enclave/PathORAM_Enclave.cpp ZT_Enclave/CircuitORAM_Enclave.cpp ZT_Enclave/LinearScan_ORAM.cpp $(wildcard ZT_Enclave/Edger8rSyntax/*.cpp) $(wildcard ZT_Enclave/TrustedLibrary/*.cpp)
-Enclave_Include_Paths := -IInclude -IEnclave -I$(SGX_SDK)/include -I$(SGX_SDK)/include/libcxx -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGXSSL_INCLUDE_PATH) 
+# services_lib = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services
+
+OPENSSL_INCLUDE_PATH := /opt/intel/sgxssl/include
+OPENSSL_LIBRARY_PATH := /opt/intel/sgxssl/lib64
+
+Enclave_Asm_Files := ZT_Enclave/oblivious_functions.asm
+Enclave_Asm_Objects := $(Enclave_Asm_Files:.asm=.o)
+
+Enclave_Cpp_Files := ZT_Enclave/Globals_Enclave.cpp ZT_Enclave/ZT_Enclave.cpp ZT_Enclave/Enclave_utils.cpp ZT_Enclave/Block.cpp ZT_Enclave/Bucket.cpp ZT_Enclave/Stash.cpp ZT_Enclave/ORAMTree.cpp ZT_Enclave/PathORAM_Enclave.cpp ZT_Enclave/CircuitORAM_Enclave.cpp ZT_Enclave/LinearScan_ORAM.cpp
+Enclave_Include_Paths := -IInclude -IZT_Enclave -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx -I$(OPENSSL_INCLUDE_PATH) 
 #-I$(services_lib)/static_trusted -I$(services_lib)/common
 
-Enclave_C_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(Enclave_Include_Paths)
+Enclave_C_Flags := $(Enclave_Include_Paths) -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections $(MITIGATION_CFLAGS)
+CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")
+ifeq ($(CC_BELOW_4_9), 1)
+	Enclave_C_Flags += -fstack-protector
+else
+	Enclave_C_Flags += -fstack-protector-strong
+endif
+
 Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++11 -nostdinc++
-SgxSSL_Link_Libraries := -L$(OPENSSL_LIBRARY_PATH) -Wl,--whole-archive -l$(SGXSSL_Library_Name) -Wl,--no-whole-archive \
+
+# Enable the security flags
+Enclave_Security_Link_Flags := -Wl,-z,relro,-z,now,-z,noexecstack
+SgxSSL_Link_Libraries := -L$(OPENSSL_LIBRARY_PATH) -Wl,--whole-archive -l$(SGXSSL_Library_Name) -Wl,--no-whole-archive -l$(OpenSSL_Crypto_Library_Name)
 
 # To generate a proper enclave, it is recommended to follow below guideline to link the trusted libraries:
 #    1. Link sgx_trts with the `--whole-archive' and `--no-whole-archive' options,
@@ -155,10 +163,10 @@ SgxSSL_Link_Libraries := -L$(OPENSSL_LIBRARY_PATH) -Wl,--whole-archive -l$(SGXSS
 #       Use `--start-group' and `--end-group' to link these libraries.
 # Do NOT move the libraries linked with `--start-group' and `--end-group' within `--whole-archive' and `--no-whole-archive' options.
 # Otherwise, you may get some undesirable errors.
-Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
-        -Wl,--whole-archive -lsgx_tsgxssl -Wl,--no-whole-archive -lsgx_tsgxssl_crypto\
+Enclave_Link_Flags := $(SGX_COMMON_FLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles $(MITIGATION_LDFLAGS) $(Enclave_Security_Link_Flags) \
+        $(SgxSSL_Link_Libraries) -L$(SGX_LIBRARY_PATH) \
         -Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
-        -Wl,--start-group -lsgx_tstdc -lsgx_tcxx -l$(Crypto_Library_Name) -l$(Service_Library_Name) -Wl,--end-group \
+        -Wl,--start-group -lsgx_tstdc -lsgx_tcxx  -lsgx_pthread -l$(Crypto_Library_Name) -l$(Service_Library_Name) -Wl,--end-group \
         -Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
         -Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
         -Wl,--defsym,__ImageBase=0 \
@@ -221,24 +229,28 @@ ifneq ($(Build_Mode), HW_RELEASE)
 	@echo "RUN  =>  $(App_Name) [$(SGX_MODE)|$(SGX_ARCH), OK]"
 endif
 
+.config_$(Build_Mode)_$(SGX_ARCH):
+	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) ZT_Untrusted/Enclave_u.* $(Enclave_Cpp_Objects) ZT_Enclave/Enclave_t.*
+	@touch .config_$(Build_Mode)_$(SGX_ARCH)
+
 ######## App Objects ########
 
-$(UNTRUSTED_DIR)/lib_services_u.c: $(SGX_EDGER8R) static_trusted/lib_services.edl
-	@mkdir -p $(UNTRUSTED_DIR)
-	@cd $(UNTRUSTED_DIR) && $(SGX_EDGER8R) --search-path $(SGXSSL_INCLUDE_PATH) --untrusted ../static_trusted/lib_services.edl --search-path ../static_trusted --search-path $(SGX_SDK)/include
-	@echo "GEN  =>  $@"
+# $(UNTRUSTED_DIR)/lib_services_u.c: $(SGX_EDGER8R) static_trusted/lib_services.edl
+# 	@mkdir -p $(UNTRUSTED_DIR)
+# 	@cd $(UNTRUSTED_DIR) && $(SGX_EDGER8R) --search-path $(OPENSSL_INCLUDE_PATH) --untrusted ../static_trusted/lib_services.edl --search-path ../static_trusted --search-path $(SGX_SDK)/include
+# 	@echo "GEN  =>  $@"
 
-$(UNTRUSTED_DIR)/lib_services_u.o: $(UNTRUSTED_DIR)/lib_services_u.c
-	@$(CC) $(App_C_Flags) -c $< -o $@ $(App_Link_Flags)
-	@echo "CC   <=  $<" 
+# $(UNTRUSTED_DIR)/lib_services_u.o: $(UNTRUSTED_DIR)/lib_services_u.c
+# 	@$(CC) $(App_C_Flags) -c $< -o $@ $(App_Link_Flags)
+# 	@echo "CC   <=  $<" 
 	
 #$(COMMON_ELEOS)/%.o: $(COMMON_ELEOS)/%.cpp
 #	@$(CXX) $(App_Cpp_Flags) -c $< -o $@ $(App_Link_Flags)
 #	@echo "CXX  <=  $<"	
 	
-$(UNTRUSTED_DIR)/%.o: $(UNTRUSTED_DIR)/%.cpp
-	@$(CXX) $(App_Cpp_Flags) -c $< -o $@ $(App_Link_Flags)
-	@echo "CXX  <=  $<"
+# $(UNTRUSTED_DIR)/%.o: $(UNTRUSTED_DIR)/%.cpp
+# 	@$(CXX) $(App_Cpp_Flags) -c $< -o $@ $(App_Link_Flags)
+# 	@echo "CXX  <=  $<"
 	
 #lib_services.untrusted.a: $(UNTRUSTED_DIR)/lib_services_u.o $(Lib_services_Cpp_Objects)
 #	ar rcs lib_services.untrusted.a $(Lib_services_Cpp_Objects) $(UNTRUSTED_DIR)/lib_services_u.o  
@@ -249,11 +261,11 @@ ZT_Untrusted/Enclave_u.c: $(SGX_EDGER8R) ZT_Enclave/Enclave.edl
 	@echo "GEN  =>  $@"
 
 ZT_Untrusted/Enclave_u.o: ZT_Untrusted/Enclave_u.c
-	@$(CC) $(App_C_Flags) -c $< -o $@
+	@$(CC) $(SGX_COMMON_CFLAGS) $(App_C_Flags) -c $< -o $@
 	@echo "CC   <=  $<"
 
 ZT_Untrusted/%.o: ZT_Untrusted/%.cpp
-	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
+	@$(CXX) $(SGX_COMMON_CFLAGS) $(App_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 $(App_Name): ZT_Untrusted/Enclave_u.o $(App_Cpp_Objects)
@@ -266,10 +278,6 @@ $(App_Name): ZT_Untrusted/Enclave_u.o $(App_Cpp_Objects)
 	cp libZT.so ../
 	$(MAKE) -C Sample_App/
 
-.config_$(Build_Mode)_$(SGX_ARCH):
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) ZT_Untrusted/Enclave_u.* $(Enclave_Cpp_Objects) ZT_Enclave/Enclave_t.*
-	@touch .config_$(Build_Mode)_$(SGX_ARCH)
-
 ######## Enclave Objects ########
 
 ZT_Enclave/Enclave_t.c: $(SGX_EDGER8R) ZT_Enclave/Enclave.edl
@@ -277,14 +285,14 @@ ZT_Enclave/Enclave_t.c: $(SGX_EDGER8R) ZT_Enclave/Enclave.edl
 	@echo "GEN  =>  $@"
 
 ZT_Enclave/Enclave_t.o: ZT_Enclave/Enclave_t.c
-	@$(CC) $(Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(SGX_COMMON_CFLAGS) $(Enclave_C_Flags) -c $< -o $@
 	@echo "CC   <=  $<"
 	
 ZT_Enclave/oblivious_functions.o: ZT_Enclave/oblivious_functions.asm
 	@$(NASM) $(NASM_Flags) $< -o $@  
 
 ZT_Enclave/%.o: ZT_Enclave/%.cpp $(Enclave_Asm_Objects)
-	@$(CXX) $(Enclave_Cpp_Flags) -c $< -o $@
+	@$(CXX) $(SGX_COMMON_CXXFLAGS) $(Enclave_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 $(Enclave_Name): ZT_Enclave/Enclave_t.o $(Enclave_Cpp_Objects) $(Enclave_Asm_Objects)

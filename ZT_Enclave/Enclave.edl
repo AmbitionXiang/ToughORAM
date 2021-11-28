@@ -32,21 +32,10 @@
 /* Enclave.edl - Top EDL file. */
 
 enclave {
-    include "user_types.h" /* buffer_t */
-    /* Import ECALL/OCALL from sub-directory EDLs.
-     *  [from]: specifies the location of EDL file. 
-     *  [import]: specifies the functions to import, 
-     *  [*]: implies to import all functions.
-     */
-    
-    from "Edger8rSyntax/Types.edl" import *;
-    from "Edger8rSyntax/Pointers.edl" import *;
-    from "Edger8rSyntax/Arrays.edl" import *;
-    from "Edger8rSyntax/Functions.edl" import *;
-
-    from "TrustedLibrary/Libc.edl" import *;
-    from "TrustedLibrary/Libcxx.edl" import ecall_exception, ecall_map;
-    from "TrustedLibrary/Thread.edl" import *;
+  include "user_types.h" /* buffer_t */
+  from "sgx_tstdc.edl" import sgx_oc_cpuidex;
+  from "sgx_tstdc.edl" import sgx_thread_wait_untrusted_event_ocall, sgx_thread_set_untrusted_event_ocall, sgx_thread_setwait_untrusted_events_ocall, sgx_thread_set_multiple_untrusted_events_ocall;
+  from "sgx_pthread.edl" import *;
 
   trusted {
     public uint32_t getNewORAMInstanceID(uint8_t oram_type);
@@ -61,7 +50,7 @@ enclave {
            [in, size = tag_size] unsigned char* tag_in, uint32_t tag_size, 
            [in, size = pubkey_size] unsigned char *client_pubkey, uint32_t pubkey_size, uint32_t pubkey_size_x, uint32_t pubkey_size_y); 
     public int8_t LSORAMInsert_pt(uint32_t instance_id, [in, size = key_size] unsigned char *key, uint32_t key_size, 
-       [in, size = value_size] unsigned char *value, uint32_t value_size);
+           [in, size = value_size] unsigned char *value, uint32_t value_size);
 
     public int8_t LSORAMFetch(uint32_t instance_id, [in, size=request_size] unsigned char *encrypted_request, uint32_t request_size, 
            [out, size = response_size] unsigned char *encrypted_response, uint32_t response_size, [in, size = tag_size] unsigned char* tag_in, 
@@ -88,16 +77,11 @@ enclave {
  
     /*
     public uint32_t store_enclave_state([out,size = posmap_size] unsigned char* posmap, uint32_t posmap_size, [out, size = stash_size] unsigned char *stash, uint32_t stash_size, [out,size = hash_size] unsigned char* merkle_root, uint32_t hash_size);
-   		public uint32_t restore_enclave_state(uint32_t maxBlocks, uint32_t dataSize, [in,size = posmap_size] uint32_t* posmap, uint32_t posmap_size, [in, size = stash_size] uint32_t *stash, uint32_t stash_size, [in,size=hash_size] unsigned char *merkle_root, uint32_t hash_size);
+   	public uint32_t restore_enclave_state(uint32_t maxBlocks, uint32_t dataSize, [in,size = posmap_size] uint32_t* posmap, uint32_t posmap_size, [in, size = stash_size] uint32_t *stash, uint32_t stash_size, [in,size=hash_size] unsigned char *merkle_root, uint32_t hash_size);
     public uint32_t storePosmapMerkleRoot([out,size = posmap_size] unsigned char* posmap, uint32_t posmap_size, [out,size = hash_and_key_size] unsigned char* merkle_root_and_aes_key, uint32_t hash_and_key_size);
     public uint32_t storeStashLevel([in,size = stash_size] unsigned char* stash, uint32_t stash_size, uint32_t level);
     */
   };
-    /* 
-     * ocall_print_string - invokes OCALL to display string buffer inside the enclave.
-     *  [in]: copy the string buffer to App outside.
-     *  [string]: specifies 'str' is a NULL terminated buffer.
-     */
     
   untrusted {
     void ocall_print_string([in, string] const char *str);

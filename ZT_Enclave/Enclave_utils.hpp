@@ -17,19 +17,19 @@
 */
 
 #ifndef __ZT_ENCLAVE_UTILS__
-  #include "Globals_Enclave.hpp"
-  #include "oasm_lib.h" 
+#include "Globals_Enclave.hpp"
+#include "oasm_lib.h"
 
-  void oarray_search(uint32_t *array, uint32_t loc, uint32_t *leaf, uint32_t newLabel,uint32_t N_level);
+void oarray_search(uint32_t *array, uint32_t loc, uint32_t *leaf, uint32_t newLabel, uint32_t N_level);
 
-  void displayKey(unsigned char *key, uint32_t key_size);
+void displayKey(unsigned char *key, uint32_t key_size);
 
-  void serializeECCKeys(sgx_ec256_private_t *ZT_private_key, sgx_ec256_public_t *ZT_public_key, unsigned char *serialized_keys);
+void serializeECCKeys(sgx_ec256_private_t *ZT_private_key, sgx_ec256_public_t *ZT_public_key, unsigned char *serialized_keys);
 
-  void enclave_sha256(char * string, uint32_t str_len);
+void enclave_sha256(char *string, uint32_t str_len);
 
-  void SerializeBNPair(BIGNUM *x, BIGNUM *y, unsigned char **bin_x, unsigned char **bin_y);
-  
-  #define __ZT_ENCLAVE_UTILS__
+void SerializeBNPair(BIGNUM *x, BIGNUM *y, unsigned char **bin_x, unsigned char **bin_y);
+
+#define __ZT_ENCLAVE_UTILS__
 
 #endif

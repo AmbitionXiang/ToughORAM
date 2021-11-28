@@ -29,54 +29,43 @@
  *
  */
 
-
 #ifndef _APP_H_
 #define _APP_H_
 
+#include <assert.h>
+#include <pwd.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <random>
+#include <vector>
+
 #include "../CONFIG.h"
 #include "../CONFIG_FLAGS.h"
-
 #include "../Globals.hpp"
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <time.h> 
-#include <vector>
-#include <map>
-#include <stdlib.h>
-#include <stdarg.h>
-#include "sgx_urts.h"
 #include "Enclave_u.h"
 #include "LocalStorage.hpp"
-#include <iostream>
-#include <fstream>
-#include <random>
-#include <cstdint>
+#include "sgx_eid.h"   /* sgx_enclave_id_t */
+#include "sgx_error.h" /* sgx_status_t */
+#include "sgx_urts.h"
 
-#include "sgx_error.h"       /* sgx_status_t */
-#include "sgx_eid.h"     /* sgx_enclave_id_t */
+#define TOKEN_FILENAME "enclave.token"
+#define ENCLAVE_FILENAME "enclave.signed.so"
 
-# define TOKEN_FILENAME   "enclave.token"
-# define ENCLAVE_FILENAME "enclave.signed.so"
-
-extern sgx_enclave_id_t global_eid;    /* global enclave id */
-
+extern sgx_enclave_id_t global_eid; /* global enclave id */
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-void edger8r_array_attributes(void);
-void edger8r_type_attributes(void);
-void edger8r_pointer_attributes(void);
-void edger8r_function_attributes(void);
-
-void ecall_libc_functions(void);
-void ecall_libcxx_functions(void);
-void ecall_thread_functions(void);
 
 #if defined(__cplusplus)
 }
