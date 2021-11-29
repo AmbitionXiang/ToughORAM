@@ -539,10 +539,7 @@ void ORAMTree::Initialize() {
     printf("In ORAMTree::Initialize(), After BuildTreeRecursive\n");
 
     uint32_t d_largest;
-    if (recursion_levels == 0)
-        d_largest = D_level[0];
-    else
-        d_largest = D_level[recursion_levels - 1];
+    d_largest = D_level[recursion_levels - 1];
 
     //printf("Initialize , d_largest == %d!\n",d_largest);
 

@@ -47,4 +47,3 @@ exec_command="Sample_App/sampleapp "$N" "$no_of_req" "$stash_size" "$block_size"
 #exec_command="sgx-gdb Sample_App/sampleapp core"
 echo $exec_command
 $exec_command
-#Sample_App/sampleapp 10000 10 100 4096 new memory 1 64 path 4 0
