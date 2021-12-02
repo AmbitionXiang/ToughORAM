@@ -9,12 +9,12 @@ ZeroTrace employs an oblivious variant of traditional ORAM controller logic. To 
 Currently ZeroTrace supports two ORAM backends, PathORAM [2] and CircuitORAM [3]. Please refer the corresponding papers to get a more concrete understanding of how to parameterize these ORAMs for secure deployment scenarios.
 
 ## Pre-requisites:
-ZeroTrace requires a fully functional Intel SGX-SDK stack, we tested it with SGX SDK Linux 2.1 release. 
+ZeroTrace requires a fully functional Intel SGX-SDK stack, we tested it with SGX SDK Linux ~~2.1~~ 2.13 release. 
 To set up your SGX-SDK stack, please refer to:  https://github.com/intel/linux-sgx 
 
 ZeroTrace was tested with the following configuration :  
-* 64-bit Ubuntu 16.04 (with 4.4.0 kernel)  
-* gcc = 5.4.0  
+* 64-bit Ubuntu ~~16.04~~18.04 (with ~~4.4.0~~5.4.0 kernel)  
+* gcc = ~~5.4.0~~ 7.5.0  
 * nasm = 2.11.08 (Almost all 2.+ versions of nasm should be sufficient)
 
 ## Getting Started
