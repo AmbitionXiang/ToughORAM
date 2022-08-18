@@ -292,6 +292,7 @@ int client_HSORAM_Fetch(uint32_t lsoram_iid, uint32_t oram_iid, unsigned char *k
 }
 
 int main(int argc, char *argv[]) {
+<<<<<<< HEAD
     getParams(argc, argv);
 
     initializeZeroTrace();
@@ -321,13 +322,9 @@ int main(int argc, char *argv[]) {
 #endif
 
         inserts_start = clock();
-
-        if (store_mode == 1) {
-            ZT_LSORAM_oprm_insert_pt(zt_lsoram_id, key, key_size, value, value_size);
-        } else {
-            ZT_LSORAM_iprm_insert_pt(zt_lsoram_id, key, key_size, value, value_size);
-            //client_LSORAM_Insert(zt_lsoram_id, zt_oram_id, key, key_size, value, value_size);
-        }
+        
+        client_HSORAM_Insert(zt_lsoram_id, zt_oram_id, key, key_size, value, value_size);
+        
         inserts_stop = clock();
         std::string key_str, value_str;
         key_str.assign((const char *)key, key_size);
@@ -364,6 +361,111 @@ int main(int argc, char *argv[]) {
 
         fetches_time += (fetches_stop - fetches_start);
     }
+=======
+  getParams(argc, argv);
+
+  initializeZeroTrace();
+
+  double ftime[requestlength];
+  double processtime[requestlength];
+  double gentime[requestlength];
+  double extracttime[requestlength];
+
+  uint32_t zt_lsoram_id, zt_oram_id; 
+
+  zt_lsoram_id = ZT_New_LSORAM(num_blocks, key_size, INDEX_SIZE, store_mode, oblivious_mode, 1);
+  zt_oram_id = ZT_New(num_blocks, value_size, stash_size, double_oblivious,
+               recursion_data_size, oram_type, Z);
+ 
+  std::map<std::string, std::string> kv_table;
+  
+  inserts_time = 0; 
+  for (int i = 0; i <num_blocks; i++) { 
+    unsigned char *key = (unsigned char *) malloc(key_size);
+    unsigned char *value = (unsigned char *) malloc(value_size);
+
+    generateKeyValuePair(key, value, key_size, value_size);
+    #ifdef DEBUG_LSORAM
+      printf("In LS_Client, Key-Value pair to be inserted: \n");
+      displayKeyValuePair(key, value, key_size, value_size);
+    #endif
+
+    inserts_start = clock();
+   
+    client_HSORAM_Insert(zt_lsoram_id, zt_oram_id, key, key_size, value, value_size);
+
+    inserts_stop = clock();
+    std::string key_str, value_str;
+    key_str.assign((const char*) key, key_size);
+    value_str.assign((const char*) value, value_size);
+    kv_table.insert(std::pair<std::string, std::string>(key_str, value_str));
+    inserts_time = inserts_stop - inserts_start;
+  }  
+  
+  printf("Table size = %ld\n", kv_table.size());
+ 
+  
+  // TODO: Send requests for inserted keys, check that value returned matches the one in map
+  std::map<std::string, std::string>::iterator it = kv_table.begin();
+  unsigned char *encrypted_value_returned = (unsigned char *) malloc(value_size);
+  
+  fetches_time = 0;
+
+  for (int i = 0; i <requestlength; i++) { 
+    //TODO: Iterate over keys
+    unsigned char *key = (unsigned char*) it->first.c_str();
+
+    #ifdef DEBUG_LSORAM
+      printf("In LS_Client, Key to be fetched: \n");
+      displayKey(key, key_size);
+    #endif
+
+    fetches_start = clock(); 
+    client_HSORAM_Fetch(zt_lsoram_id, zt_oram_id, key, key_size, encrypted_value_returned, value_size, i, gentime, processtime, extracttime);
+    fetches_stop = clock();
+    ftime[i]=double(fetches_stop-fetches_start)/double(CLOCKS_PER_MS);
+
+    it++;
+    if(it==kv_table.end())
+      it=kv_table.begin(); 
+    
+    fetches_time+=(fetches_stop-fetches_start);
+  } 
+ 
+
+  double fetch_time=(double(fetches_time)/double(CLOCKS_PER_MS))/double(requestlength);
+  double insert_time=(double(inserts_time)/double(CLOCKS_PER_MS))/double(num_blocks);
+
+  printf("Total insert time = %f\n", double(inserts_time)/double(CLOCKS_PER_MS)); 
+  printf("Per Record insert time = %f\n",insert_time); 
+  printf("Total fetch time = %f\n", double(fetches_time)/double(CLOCKS_PER_MS)); 
+  printf("Per Record fetch time = %f\n",fetch_time); 
+  
+  FILE *fptr = fopen(logfile.c_str(), "a");
+  double gentime_avg, processtime_avg, extracttime_avg;
+  double gentime_std, processtime_std, extracttime_std;
+
+  gentime_avg = compute_avg((double *) gentime, requestlength);
+  processtime_avg = compute_avg((double *) processtime, requestlength);
+  extracttime_avg = compute_avg((double *) extracttime, requestlength);
+  
+  gentime_std = compute_stddev((double *) gentime, requestlength);
+  processtime_std = compute_stddev((double *) processtime, requestlength);
+  extracttime_std = compute_stddev((double *) extracttime, requestlength);
+
+  double stddev=compute_stddev((double*) ftime, requestlength);
+  
+
+  uint64_t request_size = key_size + TAG_SIZE;
+  uint64_t response_size = value_size + TAG_SIZE;
+  //fprintf(fptr, "%d,%f,%f\n", num_blocks, fetch_time, stddev);
+  fprintf(fptr, "%d, %f, %f, %f, %f, %f, %f, %ld, %ld\n", num_blocks, gentime_avg, gentime_std, processtime_avg,
+         processtime_std, extracttime_avg, extracttime_std, request_size, response_size);
+  fclose(fptr);
+
+  return 0;
+}
+>>>>>>> remotes/upstream/master
 
     double fetch_time = (double(fetches_time) / double(CLOCKS_PER_MS)) / double(requestlength);
     double insert_time = (double(inserts_time) / double(CLOCKS_PER_MS)) / double(num_blocks);

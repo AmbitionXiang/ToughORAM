@@ -129,7 +129,6 @@ else
 	Service_Library_Name := sgx_tservice
 endif
 Crypto_Library_Name := sgx_tcrypto
-
 # services_lib = /home/ssasy/Projects/oram_tester/eleos/eleos_core/trustedlib_lib_services
 
 OPENSSL_INCLUDE_PATH := /opt/intel/sgxssl/include
